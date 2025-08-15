@@ -387,8 +387,71 @@ section {
     width: 300px;
     height: 300px;
     background: linear-gradient(135deg, #2563eb, #7c3aed);
-    border: 10px solid #3e20e8;
+    border: 10px solid #5559c2;
     border-radius: 50%;
+}
+
+/* How It Works Section */
+.how-it-works {
+    background: #f8fafc;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.25rem;
+    color: #666;
+    margin-bottom: 3rem;
+}
+
+.process-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.process-step {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.process-step:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 1.5rem;
+}
+
+.process-step h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.process-step p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 0;
 }
 
 /* Contact Section */
@@ -550,6 +613,11 @@ section {
         
         .work-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .process-grid {
+            grid-template-columns: 1fr;
+            max-width: none;
         }
         
         .footer-content {
