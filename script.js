@@ -49,7 +49,7 @@ const observer = new IntersectionObserver((entries) => {
 
 // Observe elements for animation
 document.addEventListener('DOMContentLoaded', () => {
-    const animatedElements = document.querySelectorAll('.work-item, .skill-category, .contact-item');
+    const animatedElements = document.querySelectorAll('.work-item, .contact-item');
     
     animatedElements.forEach(el => {
         el.style.opacity = '0';
@@ -147,7 +147,7 @@ function showNotification(message, type = 'info') {
 // Parallax effect for floating elements
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.element');
+    const parallaxElements = document.querySelectorAll('.hero-visual');
     
     parallaxElements.forEach((element, index) => {
         const speed = 0.5 + (index * 0.1);
@@ -268,7 +268,7 @@ window.addEventListener('scroll', throttle(() => {
     
     // Parallax effect
     const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.element');
+    const parallaxElements = document.querySelectorAll('.hero-visual');
     
     parallaxElements.forEach((element, index) => {
         const speed = 0.5 + (index * 0.1);
