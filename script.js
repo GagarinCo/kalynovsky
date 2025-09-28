@@ -3,25 +3,16 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 });
 
 // Navbar background change on scroll
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-        navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-        navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
-    } else {
-        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
-        navbar.style.boxShadow = 'none';
-    }
+    const scrolled = window.scrollY > 50;
+    navbar.style.background = scrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)';
+    navbar.style.boxShadow = scrolled ? '0 2px 20px rgba(0, 0, 0, 0.1)' : 'none';
 });
 
 // Mobile menu toggle
@@ -292,20 +283,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalImg = document.getElementById('modalImage');
     const modalCaption = document.getElementById('modalCaption');
     const closeBtn = document.querySelector('.close-modal');
+    const prevBtn = document.getElementById('modalPrevBtn');
+    const nextBtn = document.getElementById('modalNextBtn');
+    
+    let currentImageIndex = 0;
+    let workImages = [];
+    
+    // Initialize work images array
+    const initializeWorkImages = () => {
+        workImages = Array.from(document.querySelectorAll('.work-image-img'));
+    };
+    
+    // Initialize on page load
+    initializeWorkImages();
+    
+    // Update modal image
+    const updateModalImage = (index) => {
+        if (workImages[index]) {
+            modalImg.src = workImages[index].src;
+            modalCaption.textContent = '';
+            currentImageIndex = index;
+            updateNavButtons();
+        }
+    };
+    
+    // Update navigation button states
+    const updateNavButtons = () => {
+        const showButtons = workImages.length > 1;
+        [prevBtn, nextBtn].forEach((btn, i) => {
+            const isDisabled = i === 0 ? currentImageIndex === 0 : currentImageIndex === workImages.length - 1;
+            btn.style.display = showButtons ? 'flex' : 'none';
+            btn.style.opacity = isDisabled ? '0.5' : '1';
+            btn.disabled = isDisabled;
+        });
+    };
     
     // Add click event to all work images
-    const workImages = document.querySelectorAll('.work-image-img');
-    workImages.forEach(img => {
+    workImages.forEach((img, index) => {
         img.addEventListener('click', function() {
+            currentImageIndex = index;
             modal.style.display = 'block';
-            modalImg.src = this.src;
-            modalCaption.textContent = this.alt;
+            updateModalImage(currentImageIndex);
             
             // Add show class after a small delay for smooth animation
             setTimeout(() => {
                 modal.classList.add('show');
             }, 10);
         });
+    });
+    
+    // Navigation button events
+    prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentImageIndex > 0) {
+            updateModalImage(currentImageIndex - 1);
+        }
+    });
+    
+    nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentImageIndex < workImages.length - 1) {
+            updateModalImage(currentImageIndex + 1);
+        }
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (modal.style.display !== 'block') return;
+        
+        const actions = {
+            'ArrowLeft': () => currentImageIndex > 0 && updateModalImage(currentImageIndex - 1),
+            'ArrowRight': () => currentImageIndex < workImages.length - 1 && updateModalImage(currentImageIndex + 1),
+            'Escape': closeModal
+        };
+        
+        actions[e.key]?.();
     });
     
     // Close modal when clicking the close button
@@ -330,5 +382,45 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             modal.style.display = 'none';
         }, 300);
+    }
+});
+
+// Carousel functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const carousel = document.getElementById('workCarousel');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (carousel && prevBtn && nextBtn) {
+        const scrollAmount = 380; // Width of one item + gap
+        
+        prevBtn.addEventListener('click', () => {
+            carousel.scrollBy({
+                left: -scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            carousel.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Update button states based on scroll position
+        const updateButtons = () => {
+            const isAtStart = carousel.scrollLeft <= 0;
+            const isAtEnd = carousel.scrollLeft >= (carousel.scrollWidth - carousel.clientWidth);
+            
+            [prevBtn, nextBtn].forEach((btn, i) => {
+                const isDisabled = i === 0 ? isAtStart : isAtEnd;
+                btn.style.opacity = isDisabled ? '0.5' : '1';
+                btn.disabled = isDisabled;
+            });
+        };
+        
+        carousel.addEventListener('scroll', updateButtons);
+        updateButtons(); // Initial state
     }
 });

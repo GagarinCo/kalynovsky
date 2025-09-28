@@ -42,46 +42,70 @@
                     <a href="#contact" class="btn btn-secondary">Let's Talk</a>
                 </div>
             </div>
-            <div class="hero-visual">
-                <div class="floating-elements">
-                    <div class="element element-1"></div>
-                    <div class="element element-2"></div>
-                    <div class="element element-3"></div>
-                </div>
-            </div>
+            <div class="hero-visual"></div>
         </section>
 
         <section id="work" class="work">
             <div class="container">
                 <h2 class="section-title">Recent Work</h2>
-                <div class="work-grid">
-                    <div class="work-item">
-                        <div class="work-image">
-                            <img src="drones_marketplace.png" alt="SkyView - Drone Marketplace" class="work-image-img">
+                <div class="carousel-container">
+                    <button class="carousel-btn carousel-btn-left" id="prevBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="work-carousel" id="workCarousel">
+                        <div class="work-item">
+                            <div class="work-image">
+                                <img src="images/drones_marketplace.jpg" alt="SkyView - Drone Marketplace" class="work-image-img">
+                            </div>
+                            <div class="work-content">
+                                <h3>SkyView - Drone Marketplace</h3>
+                                <p>A platform for bringing droners and customers together</p>
+                            </div>
                         </div>
-                        <div class="work-content">
-                            <h3>SkyView - Drone Marketplace</h3>
-                            <p>A platform for bringing droners and customers together</p>
+                        <div class="work-item">
+                            <div class="work-image">
+                                <img src="images/storylect_platform.jpg" alt="Storylect - Platform for Writers" class="work-image-img">
+                            </div>
+                            <div class="work-content">
+                                <h3>Storylect - Platform for Writers</h3>
+                                <p>A platform for writers to create and share their stories</p>
+                            </div>
+                        </div>
+                        <div class="work-item">
+                            <div class="work-image">
+                                <img src="images/api_group.png" alt="The API Group - API Testing For QA Training Platform" class="work-image-img">
+                            </div>
+                            <div class="work-content">
+                                <h3>Tech Training Platform</h3>
+                                <p>The platform for training REST API testing</p>
+                            </div>
+                        </div>
+                        <div class="work-item">
+                            <div class="work-image">
+                                <img src="images/vet_clinic.jpg" alt="Healthy Pet - Veterinary Clinic" class="work-image-img">
+                            </div>
+                            <div class="work-content">
+                                <h3>Veterinary Business Website</h3>
+                                <p>Veterinary Clinic - Helping pets live a healthy life</p>
+                            </div>
+                        </div>
+                        <div class="work-item">
+                            <div class="work-image">
+                                <img src="images/rainbow_preschool.jpg" alt="Rainbow Preschool - Preschool&Daycare" class="work-image-img">
+                            </div>
+                            <div class="work-content">
+                                <h3>Preschool & Daycare Website</h3>
+                                <p>Website for an early childhood education center</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="work-item">
-                        <div class="work-image">
-                            <img src="storylect_platform.jpg" alt="Storylect - Platform for Writers" class="work-image-img">
-                        </div>
-                        <div class="work-content">
-                            <h3>Storylect - Platform for Writers</h3>
-                            <p>A platform for writers to create and share their stories</p>
-                        </div>
-                    </div>
-                    <div class="work-item">
-                        <div class="work-image">
-                            <img src="api_group.png" alt="The API Group - API Testing For QA Training Platform" class="work-image-img">
-                        </div>
-                        <div class="work-content">
-                            <h3>Tech Training Platform</h3>
-                            <p>The platform for training REST API testing</p>
-                        </div>
-                    </div>
+                    <button class="carousel-btn carousel-btn-right" id="nextBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -95,7 +119,7 @@
                         <p>My approach combines creativity with technical expertise, ensuring every project not only looks stunning but also performs flawlessly across all devices.</p>
                     </div>
                     <div class="about-visual">
-                        <div class="profile-placeholder" style="background-image: url('me.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+                        <div class="profile-placeholder"></div>
                     </div>
                 </div>
             </div>
@@ -137,10 +161,6 @@
                 <div class="contact-content">
                     <div class="contact-info">
                         <div class="contact-item">
-                            <h4>Email</h4>
-                            <a href="mailto:kalynovskiy@gmail.com" target="_blank">Click to email me</a>
-                        </div>
-                        <div class="contact-item">
                             <h4>Location</h4>
                             <p>San Francisco Bay Area</p>
                         </div>
@@ -178,7 +198,17 @@
     <!-- Image Modal -->
     <div id="imageModal" class="image-modal">
         <span class="close-modal">&times;</span>
+        <button class="modal-nav modal-nav-left" id="modalPrevBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
         <img id="modalImage" class="modal-content">
+        <button class="modal-nav modal-nav-right" id="modalNextBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
         <div id="modalCaption"></div>
     </div>
 
