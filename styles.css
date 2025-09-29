@@ -662,14 +662,14 @@ section {
 
 @media (min-width: 1200px) {
     .hero-visual {
-        min-height: 700px;
+        min-height: 500px;
         background: url('images/background.jpg') center/cover no-repeat;
     }
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
     .hero-visual {
-        min-height: 500px;
+        min-height: 400px;
         background: url('images/background.jpg') center/cover no-repeat;
     }
 }
