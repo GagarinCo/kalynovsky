@@ -216,7 +216,7 @@ p {
     align-items: center;
     background: url('images/background.jpg') center/cover no-repeat;
     border-radius: 16px;
-    min-height: 500px;
+    min-height: 400px;
     width: 100%;
 }
 
