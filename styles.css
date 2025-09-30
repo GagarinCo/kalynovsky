@@ -196,6 +196,13 @@ p {
     box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
 }
 
+.gradient-fill {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    padding: 0.5rem;
+}
+
 .btn-secondary {
     background: transparent;
     color: #2563eb;
@@ -218,6 +225,8 @@ p {
     border-radius: 16px;
     min-height: 400px;
     width: 100%;
+    border: 3px solid #7c3aed;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
 }
 
 
@@ -241,7 +250,7 @@ section {
 /* Carousel Container */
 .carousel-container {
     position: relative;
-    margin-top: 3rem;
+    margin-top: 2rem;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -267,12 +276,12 @@ section {
     background: white;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(112, 50, 206, 0.08);
 }
 
 .work-item:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 20px rgba(80, 47, 198, 0.20);
 }
 
 /* Carousel Buttons */
@@ -881,4 +890,14 @@ textarea:focus {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    animation: borderPulse 2s ease-in-out infinite;
+}
+
+@keyframes borderPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 1px rgba(104, 40, 221, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(66, 34, 121, 0.1);
+    }
 }
