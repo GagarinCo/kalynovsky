@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://kalynovsky.com/sitemap.xml
+
+# Disallow crawling of specific directories (if any)
+# Disallow: /admin/
+# Disallow: /private/
+
+# Crawl delay (optional)
+# Crawl-delay: 1
