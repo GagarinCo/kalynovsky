@@ -7,14 +7,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Navbar background change on scroll
-window.addEventListener('scroll', () => {
-    const navbar = document.querySelector('.navbar');
-    const scrolled = window.scrollY > 50;
-    navbar.style.background = scrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)';
-    navbar.style.boxShadow = scrolled ? '0 2px 20px rgba(0, 0, 0, 0.1)' : 'none';
-});
-
 // Mobile menu toggle
 const menuToggle = document.querySelector('.menu-toggle');
 const navLinks = document.querySelector('.nav-links');
@@ -47,17 +39,18 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe elements for animation
-document.addEventListener('DOMContentLoaded', () => {
-    const animatedElements = document.querySelectorAll('.work-item, .contact-item');
-    
-    animatedElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
-    });
-});
+// Initialize EmailJS
+emailjs.init('euiONUqefh-Fu4iFh');
+
+// Input sanitization function to prevent XSS
+function sanitizeInput(input) {
+    if (!input) return '';
+    return input.toString()
+        .replace(/[<>]/g, '') // Remove potential HTML tags
+        .replace(/['"]/g, '') // Remove quotes that could break email format
+        .trim()
+        .substring(0, 1000); // Limit length to prevent abuse
+}
 
 // Form handling
 const contactForm = document.querySelector('#contactForm');
@@ -65,26 +58,44 @@ if (contactForm) {
     contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        // Get form data
+        // Show loading state
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+        
+        // Get form data and sanitize inputs
         const formData = new FormData(contactForm);
-        const name = formData.get('name');
-        const email = formData.get('email');
-        const message = formData.get('message');
+        const templateParams = {
+            from_name: sanitizeInput(formData.get('name')),
+            from_email: sanitizeInput(formData.get('email')),
+            message: sanitizeInput(formData.get('message')),
+            to_email: 'kalynovskiy@yahoo.com'
+        };
         
-        // Create Gmail mailto link with form data
-        const subject = `New Project Inquiry from ${name}`;
-        const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
-        
-        const mailtoLink = `mailto:kalynovskiy@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        
-        // Open Gmail with the form data
-        window.open(mailtoLink, '_blank');
-        
-        // Show success message
-        showNotification('Opening Gmail with your message!', 'success');
-        
-        // Reset the form
-        contactForm.reset();
+        // Send email using EmailJS
+        emailjs.send('service_645d4ws', 'template_u217nwu', templateParams)
+            .then(function(response) {
+                showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+                contactForm.reset();
+            }, function(error) {
+                showNotification('Sorry, there was an error sending your message. Please try again.', 'error');
+                
+                // Fallback to mailto if EmailJS fails
+                const name = sanitizeInput(formData.get('name'));
+                const email = sanitizeInput(formData.get('email'));
+                const message = sanitizeInput(formData.get('message'));
+                const subject = `New Project Inquiry from ${name}`;
+                const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
+                const mailtoLink = `mailto:info@kalynovsky.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                window.open(mailtoLink, '_blank');
+                showNotification('Opening your email client as backup...', 'info');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
     });
 }
 
@@ -99,12 +110,22 @@ function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <span class="notification-message">${message}</span>
-            <button class="notification-close">&times;</button>
-        </div>
-    `;
+    
+    // Create elements safely to prevent XSS
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'notification-content';
+    
+    const messageSpan = document.createElement('span');
+    messageSpan.className = 'notification-message';
+    messageSpan.textContent = message; // Use textContent instead of innerHTML
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'notification-close';
+    closeBtn.textContent = '×';
+    
+    contentDiv.appendChild(messageSpan);
+    contentDiv.appendChild(closeBtn);
+    notification.appendChild(contentDiv);
     
     // Add styles
     notification.style.cssText = `
@@ -137,108 +158,12 @@ function showNotification(message, type = 'info') {
     }, 5000);
     
     // Close button functionality
-    const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
+    const notificationCloseBtn = notification.querySelector('.notification-close');
+    notificationCloseBtn.addEventListener('click', () => {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => notification.remove(), 300);
     });
 }
-
-// Parallax effect for floating elements
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.hero-visual');
-    
-    parallaxElements.forEach((element, index) => {
-        const speed = 0.5 + (index * 0.1);
-        const yPos = -(scrolled * speed);
-        element.style.transform = `translateY(${yPos}px)`;
-    });
-});
-
-// Smooth reveal animation for work items
-const workItems = document.querySelectorAll('.work-item');
-workItems.forEach((item, index) => {
-    item.style.animationDelay = `${index * 0.2}s`;
-});
-
-// Add hover effects for work items
-workItems.forEach(item => {
-    item.addEventListener('mouseenter', () => {
-        item.style.transform = 'translateY(-8px) scale(1.02)';
-    });
-    
-    item.addEventListener('mouseleave', () => {
-        item.style.transform = 'translateY(0) scale(1)';
-    });
-});
-
-// Typing effect for hero title (optional enhancement)
-function typeWriter(element, text, speed = 100) {
-    let i = 0;
-    element.innerHTML = '';
-    
-    function type() {
-        if (i < text.length) {
-            element.innerHTML += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
-        }
-    }
-    
-    type();
-}
-
-// Initialize typing effect when page loads (optional)
-// Uncomment the following lines if you want a typing effect
-/*
-document.addEventListener('DOMContentLoaded', () => {
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const originalText = heroTitle.textContent;
-        typeWriter(heroTitle, originalText, 50);
-    }
-});
-*/
-
-// Add CSS for mobile menu
-const style = document.createElement('style');
-style.textContent = `
-    .menu-toggle.active span:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
-    
-    .menu-toggle.active span:nth-child(2) {
-        opacity: 0;
-    }
-    
-    .menu-toggle.active span:nth-child(3) {
-        transform: rotate(-45deg) translate(7px, -6px);
-    }
-    
-    .notification-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-    }
-    
-    .notification-close:hover {
-        opacity: 0.8;
-    }
-`;
-
-document.head.appendChild(style);
 
 // Performance optimization: Throttle scroll events
 function throttle(func, limit) {
@@ -277,8 +202,39 @@ window.addEventListener('scroll', throttle(() => {
     });
 }, 16)); // 60fps
 
-// Image Modal Functionality
+// Main DOMContentLoaded handler - consolidates all initialization
 document.addEventListener('DOMContentLoaded', () => {
+    // Animate elements on load
+    const animatedElements = document.querySelectorAll('.work-item, .contact-item');
+    animatedElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+    });
+    
+    // Add hover effects for work items
+    const workItems = document.querySelectorAll('.work-item');
+    workItems.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            item.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            item.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Simplified phone number click handler
+    const phoneElement = document.querySelector('.phone-obfuscated');
+    if (phoneElement) {
+        phoneElement.addEventListener('click', () => {
+            window.open('tel:+14159905711', '_self');
+        });
+        phoneElement.setAttribute('title', 'Click to call +1 (415) 990-5711');
+    }
+    
+    // Image Modal Functionality
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
     const modalCaption = document.getElementById('modalCaption');
@@ -286,126 +242,107 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevBtn = document.getElementById('modalPrevBtn');
     const nextBtn = document.getElementById('modalNextBtn');
     
-    let currentImageIndex = 0;
-    let workImages = [];
-    
-    // Initialize work images array
-    const initializeWorkImages = () => {
-        workImages = Array.from(document.querySelectorAll('.work-image-img'));
-    };
-    
-    // Initialize on page load
-    initializeWorkImages();
-    
-    // Update modal image
-    const updateModalImage = (index) => {
-        if (workImages[index]) {
-            modalImg.src = workImages[index].src;
-            modalCaption.textContent = '';
-            currentImageIndex = index;
-            updateNavButtons();
-        }
-    };
-    
-    // Update navigation button states
-    const updateNavButtons = () => {
-        const showButtons = workImages.length > 1;
-        [prevBtn, nextBtn].forEach((btn, i) => {
-            const isDisabled = i === 0 ? currentImageIndex === 0 : currentImageIndex === workImages.length - 1;
-            btn.style.display = showButtons ? 'flex' : 'none';
-            btn.style.opacity = isDisabled ? '0.5' : '1';
-            btn.disabled = isDisabled;
-        });
-    };
-    
-    // Add click event to all work images
-    workImages.forEach((img, index) => {
-        img.addEventListener('click', function() {
-            currentImageIndex = index;
-            modal.style.display = 'block';
-            updateModalImage(currentImageIndex);
-            
-            // Add show class after a small delay for smooth animation
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-        });
-    });
-    
-    // Navigation button events
-    prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentImageIndex > 0) {
-            updateModalImage(currentImageIndex - 1);
-        }
-    });
-    
-    nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentImageIndex < workImages.length - 1) {
-            updateModalImage(currentImageIndex + 1);
-        }
-    });
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-        if (modal.style.display !== 'block') return;
+    if (modal && modalImg && closeBtn && prevBtn && nextBtn) {
+        let currentImageIndex = 0;
+        let workImages = Array.from(document.querySelectorAll('.work-image-img'));
         
-        const actions = {
-            'ArrowLeft': () => currentImageIndex > 0 && updateModalImage(currentImageIndex - 1),
-            'ArrowRight': () => currentImageIndex < workImages.length - 1 && updateModalImage(currentImageIndex + 1),
-            'Escape': closeModal
+        // Update modal image
+        const updateModalImage = (index) => {
+            if (workImages[index]) {
+                modalImg.src = workImages[index].src;
+                modalCaption.textContent = '';
+                currentImageIndex = index;
+                updateNavButtons();
+            }
         };
         
-        actions[e.key]?.();
-    });
-    
-    // Close modal when clicking the close button
-    closeBtn.addEventListener('click', closeModal);
-    
-    // Close modal when clicking outside the image
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.style.display === 'block') {
-            closeModal();
-        }
-    });
-    
-    function closeModal() {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-    }
-});
-
-// Carousel functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const carousel = document.getElementById('workCarousel');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    if (carousel && prevBtn && nextBtn) {
-        const scrollAmount = 380; // Width of one item + gap
+        // Update navigation button states
+        const updateNavButtons = () => {
+            const showButtons = workImages.length > 1;
+            [prevBtn, nextBtn].forEach((btn, i) => {
+                const isDisabled = i === 0 ? currentImageIndex === 0 : currentImageIndex === workImages.length - 1;
+                btn.style.display = showButtons ? 'flex' : 'none';
+                btn.style.opacity = isDisabled ? '0.5' : '1';
+                btn.disabled = isDisabled;
+            });
+        };
         
-        prevBtn.addEventListener('click', () => {
-            carousel.scrollBy({
-                left: -scrollAmount,
-                behavior: 'smooth'
+        // Add click event to all work images
+        workImages.forEach((img, index) => {
+            img.addEventListener('click', function() {
+                currentImageIndex = index;
+                modal.style.display = 'block';
+                updateModalImage(currentImageIndex);
+                setTimeout(() => modal.classList.add('show'), 10);
             });
         });
         
-        nextBtn.addEventListener('click', () => {
-            carousel.scrollBy({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
+        // Navigation button events
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentImageIndex > 0) {
+                updateModalImage(currentImageIndex - 1);
+            }
+        });
+        
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentImageIndex < workImages.length - 1) {
+                updateModalImage(currentImageIndex + 1);
+            }
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (modal.style.display !== 'block' || !modal.classList.contains('show')) return;
+            
+            const actions = {
+                'ArrowLeft': () => currentImageIndex > 0 && updateModalImage(currentImageIndex - 1),
+                'ArrowRight': () => currentImageIndex < workImages.length - 1 && updateModalImage(currentImageIndex + 1),
+                'Escape': closeModal
+            };
+            
+            if (actions[e.key]) {
+                e.preventDefault();
+                actions[e.key]();
+            }
+        });
+        
+        // Close modal events
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+        
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+    }
+    
+    // Carousel functionality
+    const carousel = document.getElementById('workCarousel');
+    const carouselPrevBtn = document.getElementById('prevBtn');
+    const carouselNextBtn = document.getElementById('nextBtn');
+    
+    if (carousel && carouselPrevBtn && carouselNextBtn) {
+        // Responsive scroll amount based on screen size
+        const getScrollAmount = () => {
+            const workItem = carousel.querySelector('.work-item');
+            if (workItem) {
+                const itemWidth = workItem.offsetWidth;
+                const gap = window.innerWidth <= 480 ? 16 : 32;
+                return itemWidth + gap;
+            }
+            return window.innerWidth <= 480 ? 266 : 382;
+        };
+        
+        carouselPrevBtn.addEventListener('click', () => {
+            carousel.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
+        });
+        
+        carouselNextBtn.addEventListener('click', () => {
+            carousel.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
         });
         
         // Update button states based on scroll position
@@ -413,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isAtStart = carousel.scrollLeft <= 0;
             const isAtEnd = carousel.scrollLeft >= (carousel.scrollWidth - carousel.clientWidth);
             
-            [prevBtn, nextBtn].forEach((btn, i) => {
+            [carouselPrevBtn, carouselNextBtn].forEach((btn, i) => {
                 const isDisabled = i === 0 ? isAtStart : isAtEnd;
                 btn.style.opacity = isDisabled ? '0.5' : '1';
                 btn.disabled = isDisabled;
@@ -421,6 +358,103 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         carousel.addEventListener('scroll', updateButtons);
-        updateButtons(); // Initial state
+        updateButtons();
+        
+        // Touch/swipe support for mobile
+        let startX = 0;
+        let scrollLeft = 0;
+        let isDragging = false;
+        
+        carousel.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].pageX - carousel.offsetLeft;
+            scrollLeft = carousel.scrollLeft;
+            carousel.style.scrollBehavior = 'auto';
+        });
+        
+        carousel.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.touches[0].pageX - carousel.offsetLeft;
+            const walk = (x - startX) * 2;
+            carousel.scrollLeft = scrollLeft - walk;
+        });
+        
+        carousel.addEventListener('touchend', () => {
+            isDragging = false;
+            carousel.style.scrollBehavior = 'smooth';
+            updateButtons();
+        });
+        
+        // Mouse drag support for desktop
+        carousel.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - carousel.offsetLeft;
+            scrollLeft = carousel.scrollLeft;
+            carousel.style.scrollBehavior = 'auto';
+            carousel.style.cursor = 'grabbing';
+        });
+        
+        carousel.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - carousel.offsetLeft;
+            const walk = (x - startX) * 2;
+            carousel.scrollLeft = scrollLeft - walk;
+        });
+        
+        carousel.addEventListener('mouseup', () => {
+            isDragging = false;
+            carousel.style.scrollBehavior = 'smooth';
+            carousel.style.cursor = 'grab';
+            updateButtons();
+        });
+        
+        carousel.addEventListener('mouseleave', () => {
+            isDragging = false;
+            carousel.style.scrollBehavior = 'smooth';
+            carousel.style.cursor = 'grab';
+        });
+        
+        carousel.style.cursor = 'grab';
     }
 });
+
+// Add CSS for mobile menu and notifications
+const style = document.createElement('style');
+style.textContent = `
+    .menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    
+    .notification-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .notification-close:hover {
+        opacity: 0.8;
+    }
+`;
+
+document.head.appendChild(style);

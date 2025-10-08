@@ -1,1 +1,1 @@
-# kalynovsky.github.io
+# kalynovsky.com
