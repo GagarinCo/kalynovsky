@@ -52,50 +52,67 @@ function sanitizeInput(input) {
         .substring(0, 1000); // Limit length to prevent abuse
 }
 
-// Form handling
+// Form handling with error handling
 const contactForm = document.querySelector('#contactForm');
 if (contactForm) {
     contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        // Show loading state
-        const submitBtn = contactForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Sending...';
-        submitBtn.disabled = true;
-        
-        // Get form data and sanitize inputs
-        const formData = new FormData(contactForm);
-        const templateParams = {
-            from_name: sanitizeInput(formData.get('name')),
-            from_email: sanitizeInput(formData.get('email')),
-            message: sanitizeInput(formData.get('message')),
-            to_email: 'kalynovskiy@yahoo.com'
-        };
-        
-        // Send email using EmailJS
-        emailjs.send('service_645d4ws', 'template_u217nwu', templateParams)
-            .then(function(response) {
-                showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
-                contactForm.reset();
-            }, function(error) {
-                showNotification('Sorry, there was an error sending your message. Please try again.', 'error');
-                
-                // Fallback to mailto if EmailJS fails
-                const name = sanitizeInput(formData.get('name'));
-                const email = sanitizeInput(formData.get('email'));
-                const message = sanitizeInput(formData.get('message'));
-                const subject = `New Project Inquiry from ${name}`;
-                const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
-                const mailtoLink = `mailto:info@kalynovsky.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                window.open(mailtoLink, '_blank');
-                showNotification('Opening your email client as backup...', 'info');
-            })
-            .finally(() => {
-                // Reset button state
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            });
+        try {
+            // Show loading state
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            if (!submitBtn) throw new Error('Submit button not found');
+            
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            // Get form data and sanitize inputs
+            const formData = new FormData(contactForm);
+            const templateParams = {
+                from_name: sanitizeInput(formData.get('name')),
+                from_email: sanitizeInput(formData.get('email')),
+                message: sanitizeInput(formData.get('message')),
+                to_email: 'kalynovskiy@yahoo.com'
+            };
+            
+            // Validate required fields
+            if (!templateParams.from_name || !templateParams.from_email || !templateParams.message) {
+                throw new Error('Please fill in all required fields');
+            }
+            
+            // Send email using EmailJS
+            emailjs.send('service_645d4ws', 'template_u217nwu', templateParams)
+                .then(function(response) {
+                    showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+                    contactForm.reset();
+                }, function(error) {
+                    console.error('EmailJS error:', error);
+                    showNotification('Sorry, there was an error sending your message. Please try again.', 'error');
+                    
+                    // Fallback to mailto if EmailJS fails
+                    const name = sanitizeInput(formData.get('name'));
+                    const email = sanitizeInput(formData.get('email'));
+                    const message = sanitizeInput(formData.get('message'));
+                    const subject = `New Project Inquiry from ${name}`;
+                    const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
+                    const mailtoLink = `mailto:kalynovskiy@yahoo.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.open(mailtoLink, '_blank');
+                    showNotification('Opening your email client as backup...', 'info');
+                })
+                .catch((error) => {
+                    console.error('Unexpected error:', error);
+                    showNotification('An unexpected error occurred. Please try again.', 'error');
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
+        } catch (error) {
+            console.error('Form submission error:', error);
+            showNotification(error.message || 'Please check your input and try again.', 'error');
+        }
     });
 }
 
@@ -179,39 +196,86 @@ function throttle(func, limit) {
     }
 }
 
+// Performance monitoring
+function measurePerformance(name, fn) {
+    const start = performance.now();
+    try {
+        fn();
+    } catch (error) {
+        console.error(`Performance error in ${name}:`, error);
+    } finally {
+        const end = performance.now();
+        if (end - start > 16) { // Log if operation takes longer than one frame
+            console.warn(`${name} took ${end - start}ms`);
+        }
+    }
+}
+
+// Cache DOM elements for performance
+let cachedElements = null;
+
+function getCachedElements() {
+    if (!cachedElements) {
+        cachedElements = {
+            navbar: document.querySelector('.navbar'),
+            backToTopBtn: document.getElementById('backToTop'),
+            heroSection: document.querySelector('.hero'),
+            parallaxElements: document.querySelectorAll('.hero-visual')
+        };
+    }
+    return cachedElements;
+}
+
 // Apply throttling to scroll events
 window.addEventListener('scroll', throttle(() => {
+    const elements = getCachedElements();
+    const scrollY = window.scrollY;
+    
     // Navbar background change
-    const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-        navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-        navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
-    } else {
-        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
-        navbar.style.boxShadow = 'none';
+    if (elements.navbar) {
+        if (scrollY > 50) {
+            elements.navbar.classList.add('scrolled');
+        } else {
+            elements.navbar.classList.remove('scrolled');
+        }
+    }
+    
+    // Back to top button visibility
+    if (elements.backToTopBtn && elements.heroSection) {
+        const heroHeight = elements.heroSection.offsetHeight;
+        if (scrollY > heroHeight * 0.5) {
+            elements.backToTopBtn.classList.add('show');
+        } else {
+            elements.backToTopBtn.classList.remove('show');
+        }
     }
     
     // Parallax effect
-    const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.hero-visual');
-    
-    parallaxElements.forEach((element, index) => {
+    elements.parallaxElements.forEach((element, index) => {
         const speed = 0.5 + (index * 0.1);
-        const yPos = -(scrolled * speed);
+        const yPos = -(scrollY * speed);
         element.style.transform = `translateY(${yPos}px)`;
     });
 }, 16)); // 60fps
 
 // Main DOMContentLoaded handler - consolidates all initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Animate elements on load
-    const animatedElements = document.querySelectorAll('.work-item, .contact-item');
-    animatedElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
-    });
+    try {
+        // Animate elements on load
+        const animatedElements = document.querySelectorAll('.work-item, .contact-item');
+        if (animatedElements.length > 0) {
+            animatedElements.forEach(el => {
+                if (el && observer) {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(30px)';
+                    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    observer.observe(el);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing animations:', error);
+    }
     
     // Add hover effects for work items
     const workItems = document.querySelectorAll('.work-item');
@@ -233,6 +297,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         phoneElement.setAttribute('title', 'Click to call +1 (415) 990-5711');
     }
+    
+    // Back to top button functionality
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
     
     // Image Modal Functionality
     const modal = document.getElementById('imageModal');
@@ -274,6 +350,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.style.display = 'block';
                 updateModalImage(currentImageIndex);
                 setTimeout(() => modal.classList.add('show'), 10);
+                
+                // Focus management for accessibility
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                closeBtn.focus();
             });
         });
         
@@ -316,7 +397,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         function closeModal() {
             modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
             setTimeout(() => modal.style.display = 'none', 300);
+            
+            // Return focus to the image that opened the modal
+            const activeImage = workImages[currentImageIndex];
+            if (activeImage) {
+                activeImage.focus();
+            }
         }
     }
     
@@ -418,22 +507,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         carousel.style.cursor = 'grab';
     }
+    
+    // Cleanup function for memory management
+    window.addEventListener('beforeunload', () => {
+        // Remove event listeners to prevent memory leaks
+        if (cachedElements) {
+            cachedElements = null;
+        }
+    });
 });
 
 // Add CSS for mobile menu and notifications
 const style = document.createElement('style');
 style.textContent = `
-    .menu-toggle.active span:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
-    
-    .menu-toggle.active span:nth-child(2) {
-        opacity: 0;
-    }
-    
-    .menu-toggle.active span:nth-child(3) {
-        transform: rotate(-45deg) translate(7px, -6px);
-    }
     
     .notification-content {
         display: flex;
