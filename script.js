@@ -4,25 +4,8 @@ const CONFIG = {
     emailJsUserId: 'euiONUqefh-Fu4iFh',
     emailJsServiceId: 'service_645d4ws',
     emailJsTemplateId: 'template_u217nwu',
-    recipientEmail: 'kalynovskiy@yahoo.com',
-    isProduction: window.location.hostname !== 'localhost'
+    recipientEmail: 'kalynovskiy@yahoo.com'
 };
-
-// Suppress browser extension errors in console (optional)
-// These errors come from extensions, not your website code
-if (!CONFIG.isProduction) {
-    const originalError = console.error;
-    console.error = function(...args) {
-        const errorMsg = args[0]?.toString() || '';
-        // Filter out common extension errors
-        if (errorMsg.includes('runtime.lastError') || 
-            errorMsg.includes('Receiving end does not exist') ||
-            errorMsg.includes('Extension context invalidated')) {
-            return; // Suppress extension errors
-        }
-        originalError.apply(console, args); // Log real errors
-    };
-}
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -65,18 +48,13 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Initialize EmailJS with error handling
+// Initialize EmailJS
 try {
     if (typeof emailjs !== 'undefined') {
         emailjs.init(CONFIG.emailJsUserId);
-        if (!CONFIG.isProduction) {
-            console.log('✅ EmailJS initialized successfully');
-        }
-    } else {
-        console.error('❌ EmailJS library not loaded');
     }
 } catch (error) {
-    console.error('❌ EmailJS initialization failed:', error);
+    console.error('EmailJS initialization failed:', error);
 }
 
 // Input sanitization function to prevent XSS
@@ -122,30 +100,14 @@ if (contactForm) {
             // Verify reCAPTCHA v3
             if (typeof grecaptcha !== 'undefined') {
                 try {
-                    if (!CONFIG.isProduction) {
-                        console.log('🔐 Executing reCAPTCHA with key:', CONFIG.recaptchaSiteKey);
-                    }
-                    const token = await grecaptcha.execute(CONFIG.recaptchaSiteKey, { action: 'contact_form' });
-                    if (!CONFIG.isProduction) {
-                        console.log('✅ reCAPTCHA verified, token received:', token.substring(0, 20) + '...');
-                    }
-                    // Note: In production, you should verify this token on your backend
-                    // For client-side only, we're just ensuring the user completed the challenge
+                    await grecaptcha.execute(CONFIG.recaptchaSiteKey, { action: 'contact_form' });
                 } catch (recaptchaError) {
-                    console.error('❌ reCAPTCHA verification failed:', recaptchaError);
-                    console.error('Site key used:', CONFIG.recaptchaSiteKey);
-                    console.error('Make sure your domain is registered in Google reCAPTCHA console');
                     throw new Error('Security verification failed. Please try again.');
                 }
-            } else {
-                console.warn('⚠️ reCAPTCHA not loaded - grecaptcha is undefined');
             }
             
             // Check if EmailJS is available
             if (typeof emailjs === 'undefined') {
-                if (!CONFIG.isProduction) {
-                    console.warn('⚠️ EmailJS not loaded, using mailto fallback');
-                }
                 throw new Error('EmailJS not available');
             }
             
@@ -158,23 +120,16 @@ if (contactForm) {
                 templateParams
             );
             const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('EmailJS timeout')), 10000);
+                setTimeout(() => reject(new Error('Request timeout')), 10000);
             });
             
             await Promise.race([emailPromise, timeoutPromise]);
             
             // Success
-            if (!CONFIG.isProduction) {
-                console.log('✅ Message sent successfully');
-            }
             showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
             contactForm.reset();
             
         } catch (error) {
-            if (!CONFIG.isProduction) {
-                console.error('❌ Form submission error:', error);
-            }
-            
             // Check for specific network errors
             const isNetworkError = error.status === 0 || 
                                 error.text?.includes('CERT_AUTHORITY_INVALID') || 
@@ -184,9 +139,6 @@ if (contactForm) {
             
             if (isNetworkError || error.message === 'EmailJS not available') {
                 // Fallback to mailto
-                if (!CONFIG.isProduction) {
-                    console.log('🔄 Using mailto fallback');
-                }
                 const name = sanitizeInput(formData.get('name'));
                 const email = sanitizeInput(formData.get('email'));
                 const message = sanitizeInput(formData.get('message'));
@@ -286,21 +238,6 @@ function throttle(func, limit) {
     }
 }
 
-// Performance monitoring
-function measurePerformance(name, fn) {
-    const start = performance.now();
-    try {
-        fn();
-    } catch (error) {
-        console.error(`Performance error in ${name}:`, error);
-    } finally {
-        const end = performance.now();
-        if (end - start > 16) { // Log if operation takes longer than one frame
-            console.warn(`${name} took ${end - start}ms`);
-        }
-    }
-}
-
 // Cache DOM elements for performance
 let cachedElements = null;
 
@@ -350,21 +287,17 @@ window.addEventListener('scroll', throttle(() => {
 
 // Main DOMContentLoaded handler - consolidates all initialization
 document.addEventListener('DOMContentLoaded', () => {
-    try {
-        // Animate elements on load
-        const animatedElements = document.querySelectorAll('.work-item, .contact-item');
-        if (animatedElements.length > 0) {
-            animatedElements.forEach(el => {
-                if (el && observer) {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(30px)';
-                    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                    observer.observe(el);
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error initializing animations:', error);
+    // Animate elements on load
+    const animatedElements = document.querySelectorAll('.work-item, .contact-item');
+    if (animatedElements.length > 0 && observer) {
+        animatedElements.forEach(el => {
+            if (el) {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            }
+        });
     }
     
     // Add hover effects for work items
