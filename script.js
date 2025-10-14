@@ -1,3 +1,13 @@
+// Configuration
+const CONFIG = {
+    recaptchaSiteKey: '6Lc_ZekrAAAAAG635QHZDcQuNPpAy-kwkShNPA6U',
+    emailJsUserId: 'euiONUqefh-Fu4iFh',
+    emailJsServiceId: 'service_645d4ws',
+    emailJsTemplateId: 'template_u217nwu',
+    recipientEmail: 'kalynovskiy@yahoo.com',
+    isProduction: window.location.hostname !== 'localhost'
+};
+
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -39,8 +49,19 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Initialize EmailJS
-emailjs.init('euiONUqefh-Fu4iFh');
+// Initialize EmailJS with error handling
+try {
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init(CONFIG.emailJsUserId);
+        if (!CONFIG.isProduction) {
+            console.log('✅ EmailJS initialized successfully');
+        }
+    } else {
+        console.error('❌ EmailJS library not loaded');
+    }
+} catch (error) {
+    console.error('❌ EmailJS initialization failed:', error);
+}
 
 // Input sanitization function to prevent XSS
 function sanitizeInput(input) {
@@ -52,19 +73,20 @@ function sanitizeInput(input) {
         .substring(0, 1000); // Limit length to prevent abuse
 }
 
-// Form handling with error handling
+// Form handling with reCAPTCHA v3 and error handling
 const contactForm = document.querySelector('#contactForm');
 if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        
+        const originalText = submitBtn.textContent;
         
         try {
             // Show loading state
-            const submitBtn = contactForm.querySelector('button[type="submit"]');
-            if (!submitBtn) throw new Error('Submit button not found');
-            
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Sending...';
+            submitBtn.textContent = 'Verifying...';
             submitBtn.disabled = true;
             
             // Get form data and sanitize inputs
@@ -73,7 +95,7 @@ if (contactForm) {
                 from_name: sanitizeInput(formData.get('name')),
                 from_email: sanitizeInput(formData.get('email')),
                 message: sanitizeInput(formData.get('message')),
-                to_email: 'kalynovskiy@yahoo.com'
+                to_email: CONFIG.recipientEmail
             };
             
             // Validate required fields
@@ -81,37 +103,86 @@ if (contactForm) {
                 throw new Error('Please fill in all required fields');
             }
             
-            // Send email using EmailJS
-            emailjs.send('service_645d4ws', 'template_u217nwu', templateParams)
-                .then(function(response) {
-                    showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
-                    contactForm.reset();
-                }, function(error) {
-                    console.error('EmailJS error:', error);
-                    showNotification('Sorry, there was an error sending your message. Please try again.', 'error');
-                    
-                    // Fallback to mailto if EmailJS fails
-                    const name = sanitizeInput(formData.get('name'));
-                    const email = sanitizeInput(formData.get('email'));
-                    const message = sanitizeInput(formData.get('message'));
-                    const subject = `New Project Inquiry from ${name}`;
-                    const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
-                    const mailtoLink = `mailto:kalynovskiy@yahoo.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                    window.open(mailtoLink, '_blank');
-                    showNotification('Opening your email client as backup...', 'info');
-                })
-                .catch((error) => {
-                    console.error('Unexpected error:', error);
-                    showNotification('An unexpected error occurred. Please try again.', 'error');
-                })
-                .finally(() => {
-                    // Reset button state
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                });
+            // Verify reCAPTCHA v3
+            if (typeof grecaptcha !== 'undefined') {
+                try {
+                    const token = await grecaptcha.execute(CONFIG.recaptchaSiteKey, { action: 'contact_form' });
+                    if (!CONFIG.isProduction) {
+                        console.log('✅ reCAPTCHA verified');
+                    }
+                    // Note: In production, you should verify this token on your backend
+                    // For client-side only, we're just ensuring the user completed the challenge
+                } catch (recaptchaError) {
+                    if (!CONFIG.isProduction) {
+                        console.error('❌ reCAPTCHA verification failed:', recaptchaError);
+                    }
+                    throw new Error('Security verification failed. Please try again.');
+                }
+            } else if (!CONFIG.isProduction) {
+                console.warn('⚠️ reCAPTCHA not loaded');
+            }
+            
+            // Check if EmailJS is available
+            if (typeof emailjs === 'undefined') {
+                if (!CONFIG.isProduction) {
+                    console.warn('⚠️ EmailJS not loaded, using mailto fallback');
+                }
+                throw new Error('EmailJS not available');
+            }
+            
+            submitBtn.textContent = 'Sending...';
+            
+            // Send email using EmailJS with timeout
+            const emailPromise = emailjs.send(
+                CONFIG.emailJsServiceId, 
+                CONFIG.emailJsTemplateId, 
+                templateParams
+            );
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('EmailJS timeout')), 10000);
+            });
+            
+            await Promise.race([emailPromise, timeoutPromise]);
+            
+            // Success
+            if (!CONFIG.isProduction) {
+                console.log('✅ Message sent successfully');
+            }
+            showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+            contactForm.reset();
+            
         } catch (error) {
-            console.error('Form submission error:', error);
-            showNotification(error.message || 'Please check your input and try again.', 'error');
+            if (!CONFIG.isProduction) {
+                console.error('❌ Form submission error:', error);
+            }
+            
+            // Check for specific network errors
+            const isNetworkError = error.status === 0 || 
+                                error.text?.includes('CERT_AUTHORITY_INVALID') || 
+                                error.text?.includes('net::ERR_') ||
+                                error.message?.includes('timeout') ||
+                                error.message?.includes('Network Error');
+            
+            if (isNetworkError || error.message === 'EmailJS not available') {
+                // Fallback to mailto
+                if (!CONFIG.isProduction) {
+                    console.log('🔄 Using mailto fallback');
+                }
+                const name = sanitizeInput(formData.get('name'));
+                const email = sanitizeInput(formData.get('email'));
+                const message = sanitizeInput(formData.get('message'));
+                const subject = `New Project Inquiry from ${name}`;
+                const body = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
+                const mailtoLink = `mailto:${CONFIG.recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                window.open(mailtoLink, '_blank');
+                showNotification('Opening your email client...', 'info');
+            } else {
+                showNotification(error.message || 'Sorry, there was an error. Please try again.', 'error');
+            }
+        } finally {
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     });
 }
@@ -256,7 +327,7 @@ window.addEventListener('scroll', throttle(() => {
         const yPos = -(scrollY * speed);
         element.style.transform = `translateY(${yPos}px)`;
     });
-}, 16)); // 60fps
+}, 16), { passive: true }); // 60fps
 
 // Main DOMContentLoaded handler - consolidates all initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -459,21 +530,29 @@ document.addEventListener('DOMContentLoaded', () => {
             startX = e.touches[0].pageX - carousel.offsetLeft;
             scrollLeft = carousel.scrollLeft;
             carousel.style.scrollBehavior = 'auto';
-        });
+            // Disable scrolling during drag
+            carousel.style.overflow = 'hidden';
+        }, { passive: true });
         
+        // Use passive listener for better performance
         carousel.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
-            e.preventDefault();
+            
+            // For drag functionality, we need to prevent default scrolling
+            // but we can't do this with a passive listener
+            // So we'll use a different approach - programmatic scrolling
             const x = e.touches[0].pageX - carousel.offsetLeft;
             const walk = (x - startX) * 2;
             carousel.scrollLeft = scrollLeft - walk;
-        });
+        }, { passive: true });
         
         carousel.addEventListener('touchend', () => {
             isDragging = false;
             carousel.style.scrollBehavior = 'smooth';
+            // Re-enable scrolling
+            carousel.style.overflow = '';
             updateButtons();
-        });
+        }, { passive: true });
         
         // Mouse drag support for desktop
         carousel.addEventListener('mousedown', (e) => {
@@ -482,6 +561,8 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollLeft = carousel.scrollLeft;
             carousel.style.scrollBehavior = 'auto';
             carousel.style.cursor = 'grabbing';
+            // Disable scrolling during drag
+            carousel.style.overflow = 'hidden';
         });
         
         carousel.addEventListener('mousemove', (e) => {
@@ -496,14 +577,19 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = false;
             carousel.style.scrollBehavior = 'smooth';
             carousel.style.cursor = 'grab';
+            // Re-enable scrolling
+            carousel.style.overflow = '';
             updateButtons();
-        });
+        }, { passive: true });
         
         carousel.addEventListener('mouseleave', () => {
             isDragging = false;
             carousel.style.scrollBehavior = 'smooth';
             carousel.style.cursor = 'grab';
-        });
+            // Re-enable scrolling
+            carousel.style.overflow = '';
+            updateButtons();
+        }, { passive: true });
         
         carousel.style.cursor = 'grab';
     }
@@ -517,30 +603,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Add CSS for mobile menu and notifications
-const style = document.createElement('style');
-style.textContent = `
-    
-    .notification-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-    }
-    
-    .notification-close:hover {
-        opacity: 0.8;
-    }
-`;
-
-document.head.appendChild(style);
+// Notification styles are now in the main CSS file

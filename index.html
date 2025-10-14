@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.emailjs.com; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.emailjs.com https://www.google.com/recaptcha/; frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/; object-src 'none'; base-uri 'self';">
     <title>Freelance Web Designer San Francisco Bay Area | Kalynovsky - Modern Websites</title>
     <meta name="description" content="Professional freelance web designer in San Francisco Bay Area. Specializing in custom websites, UX/UI design, and responsive development for businesses and startups. 5+ years experience creating modern, fast-loading websites.">
     <meta name="keywords" content="freelance web designer, San Francisco web design, Bay Area web developer, custom website design, responsive web design, UX design, UI design, website development, startup websites, small business websites, local business websites, modern web design, professional web designer">
@@ -62,13 +62,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-PSFH065BBW"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-    
-        gtag('config', 'G-PSFH065BBW');
-    </script>
+    <script src="analytics.js"></script>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -636,6 +630,9 @@
         <div id="modalCaption"></div>
     </div>
 
+    <!-- reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lc_ZekrAAAAAOYn_ronmjJAsTtNVqidnM0CmgHZ"></script>
+    
     <!-- EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" crossorigin="anonymous"></script>
     <script src="script.js"></script>
