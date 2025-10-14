@@ -1,12 +1,28 @@
 // Configuration
 const CONFIG = {
-    recaptchaSiteKey: '6Lc_ZekrAAAAAG635QHZDcQuNPpAy-kwkShNPA6U',
+    recaptchaSiteKey: '6Lc_ZekrAAAAAOYn_ronmjJAsTtNVqidnM0CmgHZ',
     emailJsUserId: 'euiONUqefh-Fu4iFh',
     emailJsServiceId: 'service_645d4ws',
     emailJsTemplateId: 'template_u217nwu',
     recipientEmail: 'kalynovskiy@yahoo.com',
     isProduction: window.location.hostname !== 'localhost'
 };
+
+// Suppress browser extension errors in console (optional)
+// These errors come from extensions, not your website code
+if (!CONFIG.isProduction) {
+    const originalError = console.error;
+    console.error = function(...args) {
+        const errorMsg = args[0]?.toString() || '';
+        // Filter out common extension errors
+        if (errorMsg.includes('runtime.lastError') || 
+            errorMsg.includes('Receiving end does not exist') ||
+            errorMsg.includes('Extension context invalidated')) {
+            return; // Suppress extension errors
+        }
+        originalError.apply(console, args); // Log real errors
+    };
+}
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -106,20 +122,23 @@ if (contactForm) {
             // Verify reCAPTCHA v3
             if (typeof grecaptcha !== 'undefined') {
                 try {
+                    if (!CONFIG.isProduction) {
+                        console.log('🔐 Executing reCAPTCHA with key:', CONFIG.recaptchaSiteKey);
+                    }
                     const token = await grecaptcha.execute(CONFIG.recaptchaSiteKey, { action: 'contact_form' });
                     if (!CONFIG.isProduction) {
-                        console.log('✅ reCAPTCHA verified');
+                        console.log('✅ reCAPTCHA verified, token received:', token.substring(0, 20) + '...');
                     }
                     // Note: In production, you should verify this token on your backend
                     // For client-side only, we're just ensuring the user completed the challenge
                 } catch (recaptchaError) {
-                    if (!CONFIG.isProduction) {
-                        console.error('❌ reCAPTCHA verification failed:', recaptchaError);
-                    }
+                    console.error('❌ reCAPTCHA verification failed:', recaptchaError);
+                    console.error('Site key used:', CONFIG.recaptchaSiteKey);
+                    console.error('Make sure your domain is registered in Google reCAPTCHA console');
                     throw new Error('Security verification failed. Please try again.');
                 }
-            } else if (!CONFIG.isProduction) {
-                console.warn('⚠️ reCAPTCHA not loaded');
+            } else {
+                console.warn('⚠️ reCAPTCHA not loaded - grecaptcha is undefined');
             }
             
             // Check if EmailJS is available
