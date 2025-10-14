@@ -86,14 +86,14 @@ if (contactForm) {
             // Get form data and sanitize inputs
             const formData = new FormData(contactForm);
             const templateParams = {
-                from_name: sanitizeInput(formData.get('name')),
-                from_email: sanitizeInput(formData.get('email')),
+                name: sanitizeInput(formData.get('name')),
+                email: sanitizeInput(formData.get('email')),
                 message: sanitizeInput(formData.get('message')),
                 to_email: CONFIG.recipientEmail
             };
             
             // Validate required fields
-            if (!templateParams.from_name || !templateParams.from_email || !templateParams.message) {
+            if (!templateParams.name || !templateParams.email || !templateParams.message) {
                 throw new Error('Please fill in all required fields');
             }
             
@@ -180,7 +180,7 @@ function showNotification(message, type = 'info') {
     
     const closeBtn = document.createElement('button');
     closeBtn.className = 'notification-close';
-    closeBtn.textContent = '×';
+    closeBtn.textContent = 'X';
     
     contentDiv.appendChild(messageSpan);
     contentDiv.appendChild(closeBtn);
